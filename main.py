@@ -7,51 +7,59 @@ from agent import DQNAgent
 from utils import *
 from argparse import ArgumentParser
 
-
-def train(episodes=1, do_render=False):
+def train(episodes=1, do_render=False, filebasename='agent'):
     env = SquashEnv()
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
-    agent = DQNAgent(state_size, action_size)
+    agent = DQNAgent(state_size, action_size, filebasename=filebasename)
+    agent.check_no_overwrite()
     #episodes = 100
     for e in range(episodes):
-        print_red_yellow_bold(f"training episode {e} start...")
-        state = env.reset()
-        state = np.reshape(state, [1, state_size])
-        total_reward = 0
-        done = False
-        while not done:
-            action = agent.act(state)
-            next_state, reward, done, _ = env.step(action)
-            next_state = np.reshape(next_state, [1, state_size])
-            agent.remember(state, action, reward, next_state, done)
-            state = next_state
-            total_reward += reward
-            if do_render:
-                env.render()
-            #if e % 1 == 0:
-                #env.render(delay=1)
-
-            if done:
-                print_green_white_bold(f"Episode {e+1}/{episodes}, Reward: {total_reward}")
-                break
-
         orig_stdout = sys.stdout
-        print_blue("replaying...", end="", flush=True)
-        sys.stdout = open(os.devnull, "w")
-        agent.replay()
-        agent.update_target_model()
-        sys.stdout = orig_stdout
-        print_blue("done.")
-        print(f"training episode {e} end")
+        try:
+            print_red_yellow_bold(f"training episode {e} start...")
+            state = env.reset()
+            state = np.reshape(state, [1, state_size])
+            total_reward = 0
+            done = False
+            while not done:
+                action = agent.act(state)
+                next_state, reward, done, _ = env.step(action)
+                next_state = np.reshape(next_state, [1, state_size])
+                agent.remember(state, action, reward, next_state, done)
+                state = next_state
+                total_reward += reward
+                if do_render:
+                    env.render()
+                #if e % 1 == 0:
+                    #env.render(delay=1)
+
+                if done:
+                    print_green_white_bold(f"Episode {e+1}/{episodes}, Reward: {total_reward}")
+                    break
+
+            print_blue("replaying...", end="", flush=True)
+            sys.stdout = open(os.devnull, "w")
+            agent.replay()
+            agent.update_target_model()
+            sys.stdout = orig_stdout
+            print_blue("done.")
+            print(f"training episode {e} end")
+        except KeyboardInterrupt:
+            sys.stdout = orig_stdout
+            print(f"Keyboard interrupt during episode {e+1}")
+            break
+        finally:
+            sys.stdout = orig_stdout
+
     
     agent.save()
 
-def evaluate_agent(episodes=5):
+def evaluate_agent(episodes=5, filebasename='agent'):
     env = SquashEnv(is_training=False, do_render=True)
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
-    agent = DQNAgent(state_size, action_size)
+    agent = DQNAgent(state_size, action_size, filebasename=filebasename)
     agent.load()
     agent.epsilon = 0  # Disable exploration
     state_size = env.observation_space.shape[0]
@@ -72,27 +80,31 @@ def evaluate_agent(episodes=5):
             env.render()
 
         print(f"Episode {e+1}/{episodes}, Total Reward: {total_reward}")
-
+ 
     env.close()        
 
 def command_train(args):
-    #print(f"train args: {args}")
     episodes = args.episodes
-    train(episodes)
+    filebasename = args.save
+    train(episodes, filebasename=filebasename)
 
 def command_eval(args):
+    print(args)
     episodes = args.episodes
-    evaluate_agent(episodes)
+    filebasename = args.load
+    evaluate_agent(episodes, filebasename=filebasename)
 
 def main():
     parser = ArgumentParser()
     subparsers = parser.add_subparsers(help="commands")
     train_parser = subparsers.add_parser("train", help="run training")
-    train_parser.add_argument("-e", "--episodes", type=int, default=10)
+    train_parser.add_argument("-e", "--episodes", type=int, default=10, help="number of episodes for training")
+    train_parser.add_argument("-s", "--save", type=str, default='agent', help="basename of the model file")
     train_parser.set_defaults(func=command_train)
 
     eval_parser = subparsers.add_parser("eval", help="run evaluation")
-    eval_parser.add_argument("-e", "--episodes", type=int, default=10)
+    eval_parser.add_argument("-e", "--episodes", type=int, default=10, help="number of episodes for evaluation")
+    eval_parser.add_argument("-l", "--load", type=str, default='agent', help="basename of the model file (previously created during training)")
     eval_parser.set_defaults(func=command_eval)
 
     args = parser.parse_args()

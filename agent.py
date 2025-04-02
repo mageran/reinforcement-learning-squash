@@ -1,9 +1,13 @@
 import tensorflow as tf
 import numpy as np
 import random
+import os
 from tensorflow.keras import layers, saving
 
 #from tensorflow.keras.saving import register_keras_serializable
+
+DATADIR = os.getenv('DATADIR', 'data')
+
 
 def create_q_network(state_size, action_size):
     model = tf.keras.Sequential([
@@ -15,9 +19,10 @@ def create_q_network(state_size, action_size):
     return model
 
 class DQNAgent:
-    def __init__(self, state_size, action_size):
+    def __init__(self, state_size, action_size, filebasename='agent'):
         self.state_size = state_size
         self.action_size = action_size
+        self.filebasename = filebasename
         self.q_model = create_q_network(state_size, action_size)
         self.target_model = create_q_network(state_size, action_size)
         self.target_model.set_weights(self.q_model.get_weights())
@@ -59,11 +64,24 @@ class DQNAgent:
     def update_target_model(self):
         self.target_model.set_weights(self.q_model.get_weights())
     
-    def save(self, filepath='agent'):
+    def check_no_overwrite(self):
+        filepath = os.path.join(DATADIR, self.filebasename)
+        fnames = [f"{filepath}_q_model.keras", f"{filepath}_target_model.keras"]
+        for fname in fnames:
+            if os.path.exists(fname):
+                raise Exception(f"{fname} already exists; remove the file if you want to overwrite it or specify another name uising --save option")
+
+
+    def save(self):
+        os.makedirs(DATADIR, exist_ok=True)
+        filepath = os.path.join(DATADIR, self.filebasename)
+        print(f"saving models to {filepath}*.keras...")
         self.q_model.save(filepath + '_q_model.keras')
         self.target_model.save(filepath + '_target_model.keras')
     
-    def load(self, filepath='agent'):
+    def load(self):
+        filepath = os.path.join(DATADIR, self.filebasename)
+        print(f"loading models from {filepath}*.keras...")
         self.q_model = tf.keras.models.load_model(filepath + '_q_model.keras')
         self.target_model = tf.keras.models.load_model(filepath + '_target_model.keras')
 
