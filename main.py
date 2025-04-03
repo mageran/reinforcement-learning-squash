@@ -17,6 +17,7 @@ def train(episodes=1, do_render=False, filebasename='agent', load_filebasename=N
     if load_filebasename is not None:
         agent.load(basename=load_filebasename)
     #episodes = 100
+    training_start_time = time.time()
     for e in range(episodes):
         orig_stdout = sys.stdout
         try:
@@ -50,7 +51,12 @@ def train(episodes=1, do_render=False, filebasename='agent', load_filebasename=N
             agent.update_target_model()
             sys.stdout = orig_stdout
             print_blue("done.")
-            print(f"training episode {e} end")
+            episode_end_time = time.time()
+            time_upto_this_episode = episode_end_time - training_start_time
+            estimated_total_time = time_upto_this_episode / (e+1) * episodes
+            print(f"total time: {estimated_total_time}")
+            print(f"estimated completion at {time.ctime(training_start_time + estimated_total_time)}")
+            #print(f"training episode {e+1} end")
         except KeyboardInterrupt:
             sys.stdout = orig_stdout
             print(f"Keyboard interrupt during episode {e+1}")

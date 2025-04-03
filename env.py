@@ -56,7 +56,7 @@ class SquashEnv(gym.Env):
             self.ball_velocity[1] = -self.ball_velocity[1]
 
     def simulate_move_ball_to_bottom(self, render=False, delay=0.3):
-        print_green(f"simulation starting position: {self.ball_position}, velocity: {self.ball_velocity}")
+        #print_green(f"simulation starting position: {self.ball_position}, velocity: {self.ball_velocity}")
         saved_ball_position = np.copy(self.ball_position)
         saved_ball_velocity = np.copy(self.ball_velocity)
         ball_move_counter = 0
@@ -73,7 +73,7 @@ class SquashEnv(gym.Env):
         self.ball_target_x = self.ball_position[0]
         if self.do_render and render:
             _render()
-        print(f"ball hits the bottom at x={self.ball_position[0]}, ball moved {ball_move_counter} times")
+        #print(f"ball hits the bottom at x={self.ball_position[0]}, ball moved {ball_move_counter} times")
         self.ball_position = saved_ball_position
         self.ball_velocity = saved_ball_velocity
 
@@ -86,12 +86,13 @@ class SquashEnv(gym.Env):
     def move_paddle(self, action):
         if action == 0:  # Move left
             self.paddle_position -= 0.05
-            print_blue("paddle moved to the left")
+            #print_blue("paddle moved to the left")
         elif action == 1:  # Move right
             self.paddle_position += 0.05
-            print_blue("paddle moved to the right")
+            #print_blue("paddle moved to the right")
         else:
-            print_blue("paddle did not move")
+            pass
+            #print_blue("paddle did not move")
 
     def training_step(self, action):
         distance_before, was_at_target = self.ball_target_paddle_distance
@@ -109,9 +110,9 @@ class SquashEnv(gym.Env):
             reward = -1
         self.done = self.ball_position[1] >= 1
         str = "got shorter" if distance_after < distance_before else "got longer" if distance_before < distance_after else "stayed the same"
-        print(f"=> distance from paddle to ball target position {str}")
-        print(f"=> was at target: {was_at_target}, is_at_target: {is_at_target}")
-        print_green_grey(f"=> reward: {reward}")
+        #print(f"=> distance from paddle to ball target position {str}")
+        #print(f"=> was at target: {was_at_target}, is_at_target: {is_at_target}")
+        #print_green_grey(f"=> reward: {reward}")
         return np.concatenate([np.copy(self.ball_position), np.copy(self.ball_velocity), [self.paddle_position]]), reward, self.done, {}
  
     def reset_if_ball_at_bottom(self):
