@@ -106,8 +106,8 @@ class SquashEnv(gym.Env):
             else:
                 reward = 1 if distance_after < distance_before else -1
         self.move_ball()
-        if self.episode_direction != 0 and action != 0 and action != self.episode_direction:
-            reward = -1
+        #if self.episode_direction != 0 and action != 0 and action != self.episode_direction:
+        #    reward = -1
         self.done = self.ball_position[1] >= 1
         str = "got shorter" if distance_after < distance_before else "got longer" if distance_before < distance_after else "stayed the same"
         #print(f"=> distance from paddle to ball target position {str}")
