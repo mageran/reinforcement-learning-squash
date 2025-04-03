@@ -7,12 +7,15 @@ from agent import DQNAgent
 from utils import *
 from argparse import ArgumentParser
 
-def train(episodes=1, do_render=False, filebasename='agent'):
+def train(episodes=1, do_render=False, filebasename='agent', load_filebasename=None):
     env = SquashEnv()
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
     agent = DQNAgent(state_size, action_size, filebasename=filebasename)
-    agent.check_no_overwrite()
+    if filebasename != load_filebasename:
+        agent.check_no_overwrite()
+    if load_filebasename is not None:
+        agent.load(basename=load_filebasename)
     #episodes = 100
     for e in range(episodes):
         orig_stdout = sys.stdout
@@ -89,7 +92,12 @@ def evaluate_agent(episodes=5, filebasename='agent'):
 def command_train(args):
     episodes = args.episodes
     filebasename = args.save
-    train(episodes, filebasename=filebasename)
+    load_filebasename = args.load
+    update_filebasename = args.update
+    if update_filebasename is not None:
+        load_filebasename = update_filebasename
+        filebasename = update_filebasename
+    train(episodes, filebasename=filebasename, load_filebasename=load_filebasename)
 
 def command_eval(args):
     print(args)
@@ -103,6 +111,8 @@ def main():
     train_parser = subparsers.add_parser("train", help="run training")
     train_parser.add_argument("-e", "--episodes", type=int, default=10, help="number of episodes for training")
     train_parser.add_argument("-s", "--save", type=str, default='agent', help="basename of the model file")
+    train_parser.add_argument("-l", "--load", type=str, default=None, help="initialize the model with a previously created one with this basename")
+    train_parser.add_argument("-u", "--update", type=str, default=None, help="basename for the model to update")
     train_parser.set_defaults(func=command_train)
 
     eval_parser = subparsers.add_parser("eval", help="run evaluation")

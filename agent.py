@@ -19,10 +19,11 @@ def create_q_network(state_size, action_size):
     return model
 
 class DQNAgent:
-    def __init__(self, state_size, action_size, filebasename='agent'):
+    def __init__(self, state_size, action_size, filebasename='agent', load_filebasename=None):
         self.state_size = state_size
         self.action_size = action_size
         self.filebasename = filebasename
+        self.load_filebasename = load_filebasename
         self.q_model = create_q_network(state_size, action_size)
         self.target_model = create_q_network(state_size, action_size)
         self.target_model.set_weights(self.q_model.get_weights())
@@ -79,8 +80,8 @@ class DQNAgent:
         self.q_model.save(filepath + '_q_model.keras')
         self.target_model.save(filepath + '_target_model.keras')
     
-    def load(self):
-        filepath = os.path.join(DATADIR, self.filebasename)
+    def load(self, basename=None):
+        filepath = os.path.join(DATADIR, self.filebasename if basename is None else basename)
         print(f"loading models from {filepath}*.keras...")
         self.q_model = tf.keras.models.load_model(filepath + '_q_model.keras')
         self.target_model = tf.keras.models.load_model(filepath + '_target_model.keras')
