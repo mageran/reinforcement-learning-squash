@@ -22,8 +22,11 @@ def train(episodes=1, do_render=False, filebasename='agent'):
             state = np.reshape(state, [1, state_size])
             total_reward = 0
             done = False
+            env.episode_direction = 0
             while not done:
                 action = agent.act(state)
+                if env.episode_direction != 0:
+                    env.episode_direction = action
                 next_state, reward, done, _ = env.step(action)
                 next_state = np.reshape(next_state, [1, state_size])
                 agent.remember(state, action, reward, next_state, done)
